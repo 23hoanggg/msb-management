@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model RoomType {
+  id           String  @id @default(uuid())
+  name         String
+  pricePerHour Decimal @db.Decimal(10, 2)
+  rooms        Room[]
+}
+
+model Room {
+  id         String     @id @default(uuid())
+  name       String     @unique
+  status     RoomStatus @default(AVAILABLE)
+  roomTypeId String
+  roomType   RoomType   @relation(fields: [roomTypeId], references: [id])
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+}
