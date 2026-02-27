@@ -6,23 +6,104 @@ datasource db {
   provider = "postgresql"
 }
 
-model RoomType {
-  id           String  @id @default(uuid())
-  name         String
-  pricePerHour Decimal @db.Decimal(10, 2)
-  rooms        Room[]
-}
-
-model Room {
-  id         String     @id @default(uuid())
-  name       String     @unique
-  status     RoomStatus @default(AVAILABLE)
-  roomTypeId String
-  roomType   RoomType   @relation(fields: [roomTypeId], references: [id])
+// --- ENUMS (Các trạng thái) ---
+enum Role {
+  ADMIN
+  STAFF
 }
 
 enum RoomStatus {
   AVAILABLE
   OCCUPIED
-  MAINTENANCE
+  REPAIRING
+}
+
+enum OrderStatus {
+  PENDING
+  SERVED
+  CANCELLED
+}
+
+// --- TABLES (Các thực thể) ---
+
+model User {
+  id           String        @id @default(uuid())
+  username     String        @unique
+  email        String        @unique
+  password     String
+  fullName     String
+  role         Role          @default(STAFF)
+  sessions     RoomSession[] // Phụ trách thanh toán
+  activityLogs ActivityLog[] // Ghi log hoạt động
+  createdAt    DateTime      @default(now())
+}
+
+model RoomType {
+  id          String  @id @default(uuid())
+  name        String // Solo, Couple, VIP...
+  basePrice   Float // Giá gốc 1 giờ
+  description String?
+  rooms       Room[]
+}
+
+model Room {
+  id       String        @id
+  name     String
+  status   RoomStatus    @default(AVAILABLE)
+  qrCode   String        @unique
+  roomType RoomType      @relation(fields: [typeId], references: [id])
+  typeId   String
+  sessions RoomSession[]
+}
+
+model RoomSession {
+  id              String      @id @default(uuid())
+  room            Room        @relation(fields: [roomId], references: [id])
+  roomId          String
+  startTime       DateTime    @default(now())
+  endTime         DateTime?
+  totalRoomFee    Float       @default(0)
+  totalServiceFee Float       @default(0)
+  totalAmount     Float       @default(0)
+  isPaid          Boolean     @default(false)
+  staff           User?       @relation(fields: [staffId], references: [id])
+  staffId         String?
+  orderItems      OrderItem[]
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  name     String // Đồ uống, Thức ăn...
+  products Product[]
+}
+
+model Product {
+  id            String      @id @default(uuid())
+  name          String
+  price         Float
+  stockQuantity Int         @default(0)
+  imageUrl      String?
+  category      Category    @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  orderItems    OrderItem[]
+}
+
+model OrderItem {
+  id          Int         @id @default(autoincrement())
+  session     RoomSession @relation(fields: [sessionId], references: [id])
+  sessionId   String
+  product     Product     @relation(fields: [productId], references: [id])
+  productId   String
+  quantity    Int
+  priceAtTime Float // Lưu giá lúc đặt
+  status      OrderStatus @default(PENDING)
+  orderTime   DateTime    @default(now())
+}
+
+model ActivityLog {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  action    String // Mô tả hành động (VD: "Đổi giá VIP")
+  timestamp DateTime @default(now())
 }
