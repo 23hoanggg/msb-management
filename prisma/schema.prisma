@@ -27,15 +27,14 @@ enum OrderStatus {
 // --- TABLES (Các thực thể) ---
 
 model User {
-  id           String        @id @default(uuid())
-  username     String        @unique
-  email        String        @unique
-  password     String
-  fullName     String
-  role         Role          @default(STAFF)
-  sessions     RoomSession[] // Phụ trách thanh toán
-  activityLogs ActivityLog[] // Ghi log hoạt động
-  createdAt    DateTime      @default(now())
+  id        String        @id @default(uuid())
+  username  String        @unique
+  email     String        @unique
+  password  String
+  fullName  String
+  role      Role          @default(STAFF)
+  sessions  RoomSession[] // Phụ trách thanh toán
+  createdAt DateTime      @default(now())
 }
 
 model RoomType {
@@ -56,24 +55,46 @@ model Room {
   sessions RoomSession[]
 }
 
+// BẢNG MỚI BỔ SUNG: QUẢN LÝ MÃ GIẢM GIÁ
+model Discount {
+  id          String        @id @default(uuid())
+  code        String        @unique // Ví dụ: "LE304"
+  description String? // Ví dụ: "Giảm 10% dịp lễ"
+  percent     Float // Phần trăm giảm (Ví dụ: 10, 20)
+  startDate   DateTime // Ngày bắt đầu áp dụng
+  endDate     DateTime // Ngày hết hạn
+  isActive    Boolean       @default(true) // Nút bật/tắt nhanh
+  sessions    RoomSession[] // Danh sách các hóa đơn đã dùng mã này
+}
+
 model RoomSession {
-  id              String      @id @default(uuid())
-  room            Room        @relation(fields: [roomId], references: [id])
-  roomId          String
-  startTime       DateTime    @default(now())
-  endTime         DateTime?
-  totalRoomFee    Float       @default(0)
-  totalServiceFee Float       @default(0)
-  totalAmount     Float       @default(0)
-  isPaid          Boolean     @default(false)
-  staff           User?       @relation(fields: [staffId], references: [id])
-  staffId         String?
-  orderItems      OrderItem[]
+  id        String    @id @default(uuid())
+  room      Room      @relation(fields: [roomId], references: [id])
+  roomId    String
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+
+  // Các cột phục vụ tính tiền và thống kê
+  totalRoomFee    Float @default(0) // Tiền giờ
+  totalServiceFee Float @default(0) // Tiền menu
+  totalAmount     Float @default(0) // Tổng tiền gốc (Tiền giờ + Tiền menu)
+  discountAmount  Float @default(0) // Số tiền được giảm
+  finalAmount     Float @default(0) // Khách thực trả (totalAmount - discountAmount)
+
+  isPaid Boolean @default(false)
+
+  // Ai là người bấm nút thanh toán?
+  staff      User?     @relation(fields: [staffId], references: [id])
+  staffId    String?
+  discount   Discount? @relation(fields: [discountId], references: [id])
+  discountId String?
+
+  orderItems OrderItem[]
 }
 
 model Category {
   id       String    @id @default(uuid())
-  name     String // Đồ uống, Thức ăn...
+  name     String
   products Product[]
 }
 
@@ -95,15 +116,7 @@ model OrderItem {
   product     Product     @relation(fields: [productId], references: [id])
   productId   String
   quantity    Int
-  priceAtTime Float // Lưu giá lúc đặt
+  priceAtTime Float
   status      OrderStatus @default(PENDING)
   orderTime   DateTime    @default(now())
-}
-
-model ActivityLog {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  action    String // Mô tả hành động (VD: "Đổi giá VIP")
-  timestamp DateTime @default(now())
 }
