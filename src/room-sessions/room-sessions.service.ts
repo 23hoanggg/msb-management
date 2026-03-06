@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-// src/room-sessions/room-sessions.service.ts
 import {
   Injectable,
   BadRequestException,
@@ -10,15 +5,17 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoomSessionDto } from './dto/create-room-session.dto';
-
-// 1. THÊM IMPORT NÀY ĐỂ TYPESCRIPT NHẬN DIỆN ĐƯỢC KIỂU DỮ LIỆU DISCOUNT
 import { Discount } from '@prisma/client';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class RoomSessionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventsGateway: EventsGateway,
+  ) {}
 
-  // HÀM MỞ PHÒNG (Đã làm ở bài trước, giữ nguyên)
+  // 1. MỞ PHÒNG
   async checkIn(dto: CreateRoomSessionDto) {
     const room = await this.prisma.room.findUnique({
       where: { id: dto.roomId },
@@ -42,11 +39,16 @@ export class RoomSessionsService {
         include: { room: true },
       });
 
+      this.eventsGateway.server.emit('room-status-changed', {
+        roomId: dto.roomId,
+        status: 'OCCUPIED',
+      });
+
       return { message: `Mở phòng ${dto.roomId} thành công!`, data: session };
     });
   }
 
-  // HÀM LẤY PHÒNG ĐANG MỞ (Đã làm ở bài trước, giữ nguyên)
+  // 2. LẤY PHÒNG ĐANG MỞ
   async findAllOpen() {
     return this.prisma.roomSession.findMany({
       where: { endTime: null },
@@ -54,9 +56,7 @@ export class RoomSessionsService {
     });
   }
 
-  // =================================================================
-  // HÀM NÂNG CẤP: ĐÓNG PHÒNG VÀ TÍNH TIỀN (ĐÃ FIX LỖI TYPESCRIPT)
-  // =================================================================
+  // 3. ĐÓNG PHÒNG VÀ TÍNH TIỀN
   async checkOut(sessionId: string, discountCode?: string) {
     const session = await this.prisma.roomSession.findUnique({
       where: { id: sessionId },
@@ -73,7 +73,6 @@ export class RoomSessionsService {
     const endTime = new Date();
     const startTime = session.startTime;
 
-    // 2. FIX LỖI Ở ĐÂY: Khai báo rõ ràng kiểu dữ liệu là (Discount hoặc null)
     let appliedDiscount: Discount | null = null;
     let discountPercent = 0;
 
@@ -82,12 +81,10 @@ export class RoomSessionsService {
         where: { code: discountCode },
       });
 
-      if (!appliedDiscount) {
+      if (!appliedDiscount)
         throw new BadRequestException('Mã giảm giá không tồn tại!');
-      }
-      if (!appliedDiscount.isActive) {
-        throw new BadRequestException('Mã giảm giá này đang bị tạm khóa!');
-      }
+      if (!appliedDiscount.isActive)
+        throw new BadRequestException('Mã giảm giá đang bị tạm khóa!');
       if (
         endTime < appliedDiscount.startDate ||
         endTime > appliedDiscount.endDate
@@ -100,7 +97,6 @@ export class RoomSessionsService {
       discountPercent = appliedDiscount.percent;
     }
 
-    // 3. TÍNH TOÁN TIỀN
     const durationMinutes = Math.ceil(
       (endTime.getTime() - startTime.getTime()) / (1000 * 60),
     );
@@ -118,17 +114,16 @@ export class RoomSessionsService {
     const discountAmount = Math.round((totalAmount * discountPercent) / 100);
     const finalAmount = totalAmount - discountAmount;
 
-    // 4. LƯU DATABASE
     await this.prisma.$transaction(async (tx) => {
       await tx.roomSession.update({
         where: { id: sessionId },
         data: {
           endTime: endTime,
-          totalRoomFee: totalRoomFee,
-          totalServiceFee: totalServiceFee,
-          totalAmount: totalAmount,
-          discountAmount: discountAmount,
-          finalAmount: finalAmount,
+          totalRoomFee,
+          totalServiceFee,
+          totalAmount,
+          discountAmount,
+          finalAmount,
           isPaid: true,
           discountId: appliedDiscount?.id || null,
         },
@@ -140,7 +135,11 @@ export class RoomSessionsService {
       });
     });
 
-    // 6. TRẢ VỀ BILL ĐỂ IN
+    this.eventsGateway.server.emit('room-status-changed', {
+      roomId: session.roomId,
+      status: 'AVAILABLE',
+    });
+
     return {
       message: 'Thanh toán và đóng phòng thành công!',
       bill: {

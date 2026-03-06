@@ -12,6 +12,7 @@ import { RoomSessionsModule } from './room-sessions/room-sessions.module';
 import { OrdersModule } from './orders/orders.module';
 import { DiscountsModule } from './discounts/discounts.module';
 import { ReportsModule } from './reports/reports.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ReportsModule } from './reports/reports.module';
     OrdersModule,
     DiscountsModule,
     ReportsModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

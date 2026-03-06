@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
   BadRequestException,
@@ -5,10 +6,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventsGateway: EventsGateway,
+  ) {}
 
   // HÀM GỌI MÓN
   async addOrderItem(dto: CreateOrderDto) {
@@ -17,52 +22,46 @@ export class OrdersService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // 1. Kiểm tra Phiên hát có hợp lệ và đang mở không?
       const session = await tx.roomSession.findUnique({
         where: { id: dto.sessionId },
       });
       if (!session || session.endTime !== null) {
         throw new BadRequestException(
-          'Phiên hát này không tồn tại hoặc đã thanh toán đóng phòng!',
+          'Phiên hát này không tồn tại hoặc đã thanh toán!',
         );
       }
 
-      // 2. Kiểm tra Sản phẩm và Số lượng tồn kho
       const product = await tx.product.findUnique({
         where: { id: dto.productId },
       });
       if (!product) throw new NotFoundException('Sản phẩm không tồn tại!');
       if (product.stockQuantity < dto.quantity) {
         throw new BadRequestException(
-          `Trong kho chỉ còn ${product.stockQuantity} ${product.name}, không đủ để đặt!`,
+          `Trong kho chỉ còn ${product.stockQuantity} ${product.name}!`,
         );
       }
 
-      // 3. Trừ số lượng tồn kho của Sản phẩm
       await tx.product.update({
         where: { id: dto.productId },
         data: { stockQuantity: product.stockQuantity - dto.quantity },
       });
 
-      // 4. Kiểm tra xem món này đã được gọi trong phiên này chưa?
       const existingOrderItem = await tx.orderItem.findFirst({
-        where: {
-          sessionId: dto.sessionId,
-          productId: dto.productId,
-        },
+        where: { sessionId: dto.sessionId, productId: dto.productId },
       });
 
+      let resultData;
+      let message = '';
+
       if (existingOrderItem) {
-        // Nếu đã gọi rồi -> Cộng dồn số lượng
-        const updatedItem = await tx.orderItem.update({
+        resultData = await tx.orderItem.update({
           where: { id: existingOrderItem.id },
           data: { quantity: existingOrderItem.quantity + dto.quantity },
-          include: { product: true }, // Trả về thông tin sản phẩm để FE dễ hiển thị
+          include: { product: true },
         });
-        return { message: 'Đã cộng dồn món thành công!', data: updatedItem };
+        message = 'Đã cộng dồn món thành công!';
       } else {
-        // Nếu chưa gọi -> Tạo mới dòng hóa đơn
-        const newItem = await tx.orderItem.create({
+        resultData = await tx.orderItem.create({
           data: {
             sessionId: dto.sessionId,
             productId: dto.productId,
@@ -71,12 +70,20 @@ export class OrdersService {
           },
           include: { product: true },
         });
-        return { message: 'Đã thêm món mới thành công!', data: newItem };
+        message = 'Đã thêm món mới thành công!';
       }
+
+      this.eventsGateway.server.emit('new-order', {
+        sessionId: dto.sessionId,
+        message: `Khách vừa đặt ${dto.quantity} ${product.name}`,
+        data: resultData,
+      });
+
+      return { message, data: resultData };
     });
   }
 
-  // Hàm xem chi tiết các món đã gọi của một Phiên hát (Dùng để in tạm tính)
+  // Lấy chi tiết món (Dùng in bill)
   async getOrderItemsBySession(sessionId: string) {
     return this.prisma.orderItem.findMany({
       where: { sessionId },
