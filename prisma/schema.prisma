@@ -35,6 +35,7 @@ model User {
   role      Role          @default(STAFF)
   sessions  RoomSession[] // Phụ trách thanh toán
   createdAt DateTime      @default(now())
+  salaries  Salary[]
 }
 
 model RoomType {
@@ -55,16 +56,15 @@ model Room {
   sessions RoomSession[]
 }
 
-// BẢNG MỚI BỔ SUNG: QUẢN LÝ MÃ GIẢM GIÁ
 model Discount {
   id          String        @id @default(uuid())
-  code        String        @unique // Ví dụ: "LE304"
-  description String? // Ví dụ: "Giảm 10% dịp lễ"
-  percent     Float // Phần trăm giảm (Ví dụ: 10, 20)
-  startDate   DateTime // Ngày bắt đầu áp dụng
-  endDate     DateTime // Ngày hết hạn
-  isActive    Boolean       @default(true) // Nút bật/tắt nhanh
-  sessions    RoomSession[] // Danh sách các hóa đơn đã dùng mã này
+  code        String        @unique
+  description String?
+  percent     Float
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean       @default(true)
+  sessions    RoomSession[]
 }
 
 model RoomSession {
@@ -83,7 +83,6 @@ model RoomSession {
 
   isPaid Boolean @default(false)
 
-  // Ai là người bấm nút thanh toán?
   staff      User?     @relation(fields: [staffId], references: [id])
   staffId    String?
   discount   Discount? @relation(fields: [discountId], references: [id])
@@ -119,4 +118,22 @@ model OrderItem {
   priceAtTime Float
   status      OrderStatus @default(PENDING)
   orderTime   DateTime    @default(now())
+}
+
+model Salary {
+  id          String    @id @default(uuid())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  month       Int
+  year        Int
+  baseSalary  Float
+  bonus       Float     @default(0) // Tiền thưởng / Phụ cấp
+  deduction   Float     @default(0) // Tiền phạt / Tạm ứng
+  totalSalary Float // Thực lĩnh (base + bonus - deduction)
+  isPaid      Boolean   @default(false)
+  paidAt      DateTime? // Ngày thanh toán
+  note        String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, month, year])
 }

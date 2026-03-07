@@ -21,8 +21,9 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { UpdateUserByAdminDto } from './dto/update-user-admin.dto';
 
-@Controller('api/users') // URL bây giờ là /api/users/...
+@Controller('api/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -44,18 +45,33 @@ export class UsersController {
 
   // 3. ADMIN / STAFF - TỰ SỬA THÔNG TIN CÁ NHÂN CỦA MÌNH
   @UseGuards(JwtAuthGuard)
-  @Patch('profile') // Dùng PATCH vì cập nhật một phần dữ liệu
+  @Patch('profile')
   updateProfile(@Req() req, @Body() updateUserDto: UpdateUserDto) {
     const userId = req.user.sub;
     return this.usersService.updateProfile(userId, updateUserDto);
   }
 
-  // 4. ADMIN - RESET MẬT KHẨU NHÂN VIÊN
+  // ADMIN - SỬA THÔNG TIN NHÂN VIÊN (Bỏ any, dùng DTO)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Patch(':id')
+  updateUserByAdmin(
+    @Param('id') id: string,
+    @Body() updateData: UpdateUserByAdminDto,
+  ) {
+    return this.usersService.updateUserByAdmin(id, updateData);
+  }
+
+  // ADMIN - ĐẶT LẠI MẬT KHẨU
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post('reset-password/:id')
-  resetPassword(@Param('id') targetUserId: string) {
-    return this.usersService.resetPassword(targetUserId);
+  resetPassword(
+    @Param('id') targetUserId: string,
+    @Body() body: { newPassword?: string },
+  ) {
+    // Controller nhận 2 biến và truyền đủ 2 biến xuống Service
+    return this.usersService.resetPassword(targetUserId, body.newPassword);
   }
 
   // 5. ADMIN - XÓA NHÂN VIÊN

@@ -34,7 +34,11 @@ export class AuthController {
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 24,
     });
-    return { message: 'Đăng nhập thành công', user: result.userInfo };
+    return {
+      message: 'Đăng nhập thành công',
+      user: result.userInfo,
+      access_token: result.access_token,
+    };
   }
 
   @Post('logout')

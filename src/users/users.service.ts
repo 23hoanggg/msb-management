@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserByAdminDto } from './dto/update-user-admin.dto';
 
 const BCRYPT_SALT_ROUNDS = 10;
 const DEFAULT_PASSWORD = '123456';
@@ -94,28 +95,6 @@ export class UsersService {
     return { message: 'Cập nhật thông tin thành công!', user: updatedUser };
   }
 
-  // 4. RESET MẬT KHẨU (Chuyển từ Auth sang)
-  async resetPassword(targetUserId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: targetUserId },
-    });
-    if (!user) throw new NotFoundException('Không tìm thấy nhân viên này');
-
-    const hashedDefaultPassword = await bcrypt.hash(
-      DEFAULT_PASSWORD,
-      BCRYPT_SALT_ROUNDS,
-    );
-
-    await this.prisma.user.update({
-      where: { id: targetUserId },
-      data: { password: hashedDefaultPassword },
-    });
-
-    return {
-      message: `Đã reset mật khẩu của ${user.username} về mặc định (${DEFAULT_PASSWORD})`,
-    };
-  }
-
   // 5. XÓA NHÂN VIÊN (Bổ sung mới)
   async remove(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -128,5 +107,64 @@ export class UsersService {
     return {
       message: `Đã xóa tài khoản nhân viên ${user.username} thành công!`,
     };
+  }
+  // 1. SỬA LẠI: THAY "any" BẰNG DTO CỦA ADMIN
+  async updateUserByAdmin(
+    targetUserId: string,
+    updateData: UpdateUserByAdminDto,
+  ) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+    });
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
+
+    if (updateData.email && updateData.email !== user.email) {
+      const emailExists = await this.prisma.user.findUnique({
+        where: { email: updateData.email },
+      });
+      if (emailExists)
+        throw new BadRequestException('Email này đã được sử dụng!');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: {
+        fullName: updateData.fullName,
+        email: updateData.email,
+        role: updateData.role,
+      },
+      select: {
+        id: true,
+        username: true,
+        fullName: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    return {
+      message: 'Admin cập nhật thông tin thành công!',
+      user: updatedUser,
+    };
+  }
+
+  // 2. SỬA LẠI: NHẬN THÊM THAM SỐ VÀ MÃ HÓA MẬT KHẨU
+  async resetPassword(userId: string, newPassword?: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
+
+    // Nếu Admin gõ pass mới thì dùng, nếu không gõ thì set mặc định là "123456"
+    const passwordToHash = newPassword || '123456';
+
+    // Mã hóa mật khẩu trước khi lưu vào Database
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(passwordToHash, salt);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Thay đổi mật khẩu thành công!' };
   }
 }

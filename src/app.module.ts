@@ -13,6 +13,7 @@ import { OrdersModule } from './orders/orders.module';
 import { DiscountsModule } from './discounts/discounts.module';
 import { ReportsModule } from './reports/reports.module';
 import { EventsModule } from './events/events.module';
+import { SalariesModule } from './salaries/salaries.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { EventsModule } from './events/events.module';
     DiscountsModule,
     ReportsModule,
     EventsModule,
+    SalariesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

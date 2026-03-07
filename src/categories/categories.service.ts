@@ -37,4 +37,14 @@ export class CategoriesService {
       );
     return this.prisma.category.delete({ where: { id } });
   }
+  // Thêm hàm update
+  async update(id: string, dto: CreateCategoryDto) {
+    const category = await this.prisma.category.findUnique({ where: { id } });
+    if (!category) throw new NotFoundException('Không tìm thấy danh mục');
+
+    return this.prisma.category.update({
+      where: { id },
+      data: dto,
+    });
+  }
 }

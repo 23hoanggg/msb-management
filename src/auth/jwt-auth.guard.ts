@@ -16,8 +16,14 @@ export class JwtAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
 
-    // 1. Lấy token từ Cookie thay vì từ Header
-    const token = request.cookies['access_token'];
+    let token = '';
+    const authHeader = request.headers.authorization;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (request.cookies && request.cookies['access_token']) {
+      token = request.cookies['access_token'];
+    }
 
     if (!token) {
       throw new UnauthorizedException(
@@ -26,17 +32,15 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      // 2. Giải mã Token
       const payload = await this.jwtService.verifyAsync(token, {
         secret: process.env.JWT_SECRET,
       });
 
-      // 3. Gắn thông tin (id, role) vào Request để các hàm phía sau dùng
       request['user'] = payload;
     } catch {
       throw new UnauthorizedException('Token không hợp lệ hoặc đã hết hạn!');
     }
 
-    return true; // Cho phép đi qua
+    return true;
   }
 }

@@ -16,14 +16,39 @@ import { UpdateDiscountDto } from './dto/update-discount.dto';
 export class DiscountsService {
   constructor(private prisma: PrismaService) {}
 
-  // 1. LẤY TẤT CẢ MÃ GIẢM GIÁ
+  // LẤY TẤT CẢ MÃ GIẢM GIÁ
   async findAll() {
     return this.prisma.discount.findMany({
       orderBy: { startDate: 'desc' },
     });
   }
 
-  // 2. TẠO MÃ MỚI
+  // TÌM MÃ THEO CODE
+  async findByCode(code: string) {
+    const discount = await this.prisma.discount.findFirst({
+      where: { code: code },
+    });
+
+    if (!discount) {
+      throw new BadRequestException('Mã giảm giá không tồn tại!');
+    }
+
+    if (!discount.isActive) {
+      throw new BadRequestException('Mã giảm giá này đang bị khóa tạm thời!');
+    }
+
+    const now = new Date();
+    if (discount.startDate && now < new Date(discount.startDate)) {
+      throw new BadRequestException('Mã giảm giá này chưa đến ngày sử dụng!');
+    }
+    if (discount.endDate && now > new Date(discount.endDate)) {
+      throw new BadRequestException('Mã giảm giá này đã hết hạn!');
+    }
+
+    return discount;
+  }
+
+  // TẠO MÃ MỚI
   async create(dto: CreateDiscountDto) {
     const existing = await this.prisma.discount.findUnique({
       where: { code: dto.code },

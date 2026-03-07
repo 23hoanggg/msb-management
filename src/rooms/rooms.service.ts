@@ -80,6 +80,7 @@ export class RoomsService {
 
     return { message: 'Cập nhật phòng thành công!', data: updatedRoom };
   }
+
   // xoa phong + bao ve du lieu
   async remove(id: string) {
     const room = await this.findOne(id);

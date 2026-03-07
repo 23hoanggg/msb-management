@@ -46,7 +46,7 @@ export class AuthService {
     };
   }
 
-  // ĐỔI MẬT KHẨU BẢO MẬT (Thuộc nghiệp vụ an toàn tài khoản)
+  // ĐỔI MẬT KHẨU BẢO MẬT
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');

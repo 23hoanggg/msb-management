@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Body,
-  //   Patch,
   Param,
   Delete,
   UseGuards,
@@ -43,7 +42,7 @@ export class RoomsController {
     return this.roomsService.create(createRoomDto);
   }
 
-  // 4. CHỈ ADMIN: Sửa phòng (Đổi tên, đổi loại, đổi trạng thái)
+  // 4. CHỈ ADMIN: Sửa phòng
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   @Patch(':id')

@@ -1,4 +1,4 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateDiscountDto {
   @IsString()
@@ -11,4 +11,7 @@ export class CreateDiscountDto {
   endDate: string;
   @IsNumber()
   percent: number;
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

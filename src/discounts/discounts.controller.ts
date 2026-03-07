@@ -27,6 +27,11 @@ export class DiscountsController {
     return this.discountService.findAll();
   }
 
+  @Get(':code')
+  findByCode(@Param('code') code: string) {
+    return this.discountService.findByCode(code);
+  }
+
   // Admin -> them ma moi
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)

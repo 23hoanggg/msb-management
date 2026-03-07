@@ -9,13 +9,13 @@ import { CheckoutDto } from './dto/checkout.dto';
 export class RoomSessionsController {
   constructor(private readonly roomSessionsService: RoomSessionsService) {}
 
-  // API Mở phòng
+  // Mở phòng
   @Post('check-in')
   checkIn(@Body() dto: CreateRoomSessionDto) {
     return this.roomSessionsService.checkIn(dto);
   }
 
-  // API Xem các phòng đang hoạt động
+  // Xem các phòng đang hoạt động
   @Get('active')
   findAllOpen() {
     return this.roomSessionsService.findAllOpen();
@@ -23,11 +23,7 @@ export class RoomSessionsController {
 
   // check out
   @Post('check-out/:id')
-  checkOut(
-    @Param('id') sessionId: string, // Lấy ID phiên hát từ URL
-    @Body() checkoutDto: CheckoutDto, // Lấy mã giảm giá từ Body (nếu có)
-  ) {
-    // Truyền cả 2 tham số xuống cho Service xử lý
+  checkOut(@Param('id') sessionId: string, @Body() checkoutDto: CheckoutDto) {
     return this.roomSessionsService.checkOut(
       sessionId,
       checkoutDto.discountCode,
