@@ -24,7 +24,6 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-@UseGuards(JwtAuthGuard)
 @Controller('api/products')
 export class ProductsController {
   constructor(
@@ -45,7 +44,7 @@ export class ProductsController {
   }
 
   // Admin -> tao san pham moi
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post()
   @UseInterceptors(FileInterceptor('image'))
@@ -61,7 +60,7 @@ export class ProductsController {
   }
 
   // Admin -> cap nhat san pham
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Patch(':id')
   @UseInterceptors(FileInterceptor('image'))
@@ -78,7 +77,7 @@ export class ProductsController {
   }
 
   // Admin -> xoa san pham
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Delete(':id')
   remove(@Param('id') id: string) {

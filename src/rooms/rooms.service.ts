@@ -41,14 +41,12 @@ export class RoomsService {
       throw new BadRequestException(
         `Mã phòng ${createRoomDto.id} đã tồn tại !`,
       );
-    const generatedQrCode = `QR_MUSICBOX_${createRoomDto.id}_${Date.now()}`;
 
     const newRoom = await this.prisma.room.create({
       data: {
         id: createRoomDto.id,
         name: createRoomDto.name,
         typeId: createRoomDto.typeId,
-        qrCode: generatedQrCode,
         status: 'AVAILABLE',
       },
     });

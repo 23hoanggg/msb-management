@@ -19,12 +19,24 @@ export class RolesGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
+
     if (!requiredRoles) {
       return true;
     }
+
     const { user } = context.switchToHttp().getRequest();
 
+    // 🟢 THÊM LỚP BẢO VỆ Ở ĐÂY:
+    // Nếu request không có thông tin user (do chưa đăng nhập hoặc thiếu token)
+    if (!user || !user.role) {
+      throw new ForbiddenException(
+        'Bạn chưa đăng nhập hoặc không có quyền truy cập chức năng này!',
+      );
+    }
+
+    // Lúc này chắc chắn user đã tồn tại, kiểm tra role an toàn
     const hasRole = requiredRoles.includes(user.role);
+
     if (!hasRole) {
       throw new ForbiddenException(
         'Bạn không có quyền truy cập chức năng này! Chỉ dành cho: ' +

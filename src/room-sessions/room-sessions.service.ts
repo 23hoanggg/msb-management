@@ -156,4 +156,15 @@ export class RoomSessionsService {
       },
     };
   }
+  // Lấy lịch sử các phiên đã thanh toán
+  async getPaidSessions() {
+    return this.prisma.roomSession.findMany({
+      where: { isPaid: true },
+      orderBy: { endTime: 'desc' },
+      take: 10,
+      include: {
+        room: { include: { roomType: true } },
+      },
+    });
+  }
 }

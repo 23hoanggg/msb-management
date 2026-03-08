@@ -50,7 +50,6 @@ model Room {
   id       String        @id
   name     String
   status   RoomStatus    @default(AVAILABLE)
-  qrCode   String        @unique
   roomType RoomType      @relation(fields: [typeId], references: [id])
   typeId   String
   sessions RoomSession[]
@@ -80,6 +79,7 @@ model RoomSession {
   totalAmount     Float @default(0) // Tổng tiền gốc (Tiền giờ + Tiền menu)
   discountAmount  Float @default(0) // Số tiền được giảm
   finalAmount     Float @default(0) // Khách thực trả (totalAmount - discountAmount)
+  subTotal        Int?  @default(0) // Tổng tiền ban đầu
 
   isPaid Boolean @default(false)
 

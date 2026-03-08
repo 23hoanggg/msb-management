@@ -17,7 +17,6 @@ import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
 import { UpdateRoomDto } from './dto/update-room.dto';
 
-@UseGuards(JwtAuthGuard)
 @Controller('api/rooms')
 export class RoomsController {
   constructor(private readonly roomsService: RoomsService) {}
@@ -35,7 +34,8 @@ export class RoomsController {
   }
 
   // 3. CHỈ ADMIN: Thêm phòng mới
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Roles(Role.ADMIN)
   @Post()
   create(@Body() createRoomDto: CreateRoomDto) {
@@ -43,7 +43,8 @@ export class RoomsController {
   }
 
   // 4. CHỈ ADMIN: Sửa phòng
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Roles(Role.ADMIN)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateRoomDto: UpdateRoomDto) {
@@ -51,7 +52,8 @@ export class RoomsController {
   }
 
   // 5. CHỈ ADMIN: Xóa phòng
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Roles(Role.ADMIN)
   @Delete(':id')
   remove(@Param('id') id: string) {
