@@ -17,16 +17,22 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+  const rawFrontendUrl = process.env.FRONTEND_URL || '';
+  const cleanFrontendUrl = rawFrontendUrl.replace(/\/$/, '');
 
   app.enableCors({
-    origin: frontendUrl,
+    origin: [
+      cleanFrontendUrl,
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    ].filter(Boolean),
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
+  console.log(`Application is running on port: ${port}`);
 }
 bootstrap();
