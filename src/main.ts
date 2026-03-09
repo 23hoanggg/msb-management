@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
@@ -21,18 +23,33 @@ async function bootstrap() {
   const rawFrontendUrl = process.env.FRONTEND_URL || '';
   const cleanFrontendUrl = rawFrontendUrl.replace(/\/$/, '');
 
+  const allowedOrigins = [
+    cleanFrontendUrl,
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+  ].filter(Boolean);
+
   app.enableCors({
-    origin: [
-      cleanFrontendUrl,
-      'http://localhost:3000',
-      'http://127.0.0.1:3000',
-    ].filter(Boolean),
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   const port = process.env.PORT || 3001;
+
   await app.listen(port);
-  console.log(`Application is running on port: ${port}`);
+
+  console.log(`Server running on port: ${port}`);
+  console.log(`Allowed CORS origins:`, allowedOrigins);
 }
+
 bootstrap();
