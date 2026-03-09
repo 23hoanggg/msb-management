@@ -22,9 +22,6 @@ export class PrismaService
 
   async onModuleInit() {
     await this.$connect();
-    console.log('✅ Prisma connected');
-    const result = await this.$queryRaw`SELECT 1`;
-    console.log('✅ DB test query result:', result);
   }
 
   async onModuleDestroy() {
