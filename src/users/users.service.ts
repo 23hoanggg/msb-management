@@ -148,12 +148,12 @@ export class UsersService {
     };
   }
 
-  // 2. SỬA LẠI: NHẬN THÊM THAM SỐ VÀ MÃ HÓA MẬT KHẨU
+  // 2. reset password
   async resetPassword(userId: string, newPassword?: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Không tìm thấy người dùng');
 
-    // Nếu Admin gõ pass mới thì dùng, nếu không gõ thì set mặc định là "123456"
+    // mặc định là "123456"
     const passwordToHash = newPassword || '123456';
 
     // Mã hóa mật khẩu trước khi lưu vào Database

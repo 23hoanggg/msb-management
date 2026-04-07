@@ -3,18 +3,18 @@ import { Type } from 'class-transformer';
 
 export class CreateProductDto {
   @IsString()
-  name: string;
+  name!: string;
 
   @Type(() => Number)
   @IsNumber()
-  price: number;
+  price!: number;
 
   @Type(() => Number)
   @IsNumber()
-  stockQuantity: number;
+  stockQuantity!: number;
 
   @IsString()
-  categoryId: string;
+  categoryId!: string;
 
   @IsOptional()
   @IsString()

@@ -2,9 +2,9 @@ import { IsNumber, IsString } from 'class-validator';
 
 export class CreateOrderDto {
   @IsString()
-  sessionId: string;
+  sessionId!: string;
   @IsString()
-  productId: string;
+  productId!: string;
   @IsNumber()
-  quantity: number;
+  quantity!: number;
 }

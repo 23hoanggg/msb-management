@@ -2,9 +2,9 @@ import { IsNumber, IsString } from 'class-validator';
 
 export class CreateRoomTypeDto {
   @IsString()
-  name: string;
+  name!: string;
   @IsNumber()
-  basePrice: number;
+  basePrice!: number;
   @IsString()
   description?: string;
 }

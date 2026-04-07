@@ -14,7 +14,7 @@ import { Server, Socket } from 'socket.io';
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   handleConnection(client: Socket) {
     console.log(`[Socket] Client đã kết nối: ${client.id}`);

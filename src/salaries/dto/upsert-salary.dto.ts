@@ -3,16 +3,16 @@ import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 export class UpsertSalaryDto {
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  userId!: string;
 
   @IsNumber()
-  month: number;
+  month!: number;
 
   @IsNumber()
-  year: number;
+  year!: number;
 
   @IsNumber()
-  baseSalary: number; // Lương cơ bản
+  baseSalary!: number; // Lương cơ bản
 
   @IsOptional()
   @IsNumber()

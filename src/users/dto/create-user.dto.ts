@@ -10,21 +10,21 @@ import {
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty({ message: 'Tên đăng nhập không được để trống' })
-  username: string;
+  username!: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Họ tên không được để trống' })
-  fullName: string;
+  fullName!: string;
 
   @IsEmail({}, { message: 'Email không hợp lệ' })
-  email: string;
+  email!: string;
 
   // BỔ SUNG THÊM 2 TRƯỜNG NÀY ĐỂ NESTJS CHO PHÉP NHẬN DỮ LIỆU
   @IsString()
   @IsNotEmpty({ message: 'Mật khẩu không được để trống' })
-  password: string;
+  password!: string;
 
   @IsString() // Nếu bạn có dùng Enum thì đổi thành @IsEnum(Role) cho chặt chẽ nhé
   @IsNotEmpty({ message: 'Quyền (Role) không được để trống' })
-  role: string;
+  role!: string;
 }
