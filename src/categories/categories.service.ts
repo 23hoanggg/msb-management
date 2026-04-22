@@ -17,7 +17,7 @@ export class CategoriesService {
     });
   }
 
-  // tao moi
+  // tao moi 
   async create(dto: CreateCategoryDto) {
     return this.prisma.category.create({
       data: dto,
