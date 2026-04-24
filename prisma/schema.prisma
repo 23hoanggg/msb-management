@@ -35,7 +35,6 @@ model User {
   role      Role          @default(STAFF)
   sessions  RoomSession[] // Phụ trách thanh toán
   createdAt DateTime      @default(now())
-  salaries  Salary[]
 }
 
 model RoomType {
@@ -118,22 +117,4 @@ model OrderItem {
   priceAtTime Float
   status      OrderStatus @default(PENDING)
   orderTime   DateTime    @default(now())
-}
-
-model Salary {
-  id          String    @id @default(uuid())
-  user        User      @relation(fields: [userId], references: [id])
-  userId      String
-  month       Int
-  year        Int
-  baseSalary  Float
-  bonus       Float     @default(0) // Tiền thưởng / Phụ cấp
-  deduction   Float     @default(0) // Tiền phạt / Tạm ứng
-  totalSalary Float // Thực lĩnh (base + bonus - deduction)
-  isPaid      Boolean   @default(false)
-  paidAt      DateTime? // Ngày thanh toán
-  note        String?
-  createdAt   DateTime  @default(now())
-
-  @@unique([userId, month, year])
 }

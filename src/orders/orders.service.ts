@@ -25,7 +25,7 @@ export class OrdersService {
       // BẢO MẬT MÃ QR ĐỘNG TẠI ĐÂY:
       const session = await tx.roomSession.findUnique({
         where: { id: dto.sessionId },
-        include: { room: true }, // ✅ THÊM VÀO ĐÂY ĐỂ TRUY VẤN LẤY TÊN PHÒNG
+        include: { room: true },
       });
 
       if (!session) {
