@@ -98,6 +98,7 @@ export class OrdersService {
         roomName: session.room.name,
         message: `Khách vừa đặt ${dto.quantity} ${product.name}`,
         data: resultData,
+        source: dto.source,
       });
 
       return { message, data: resultData };
