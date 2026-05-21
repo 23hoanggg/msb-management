@@ -1,4 +1,15 @@
-import { Controller, Post, Body, Get, UseGuards, Param } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Param,
+  Req,
+} from '@nestjs/common';
 import { RoomSessionsService } from './room-sessions.service';
 import { CreateRoomSessionDto } from './dto/create-room-session.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -10,8 +21,10 @@ export class RoomSessionsController {
 
   @UseGuards(JwtAuthGuard)
   @Post('check-in')
-  checkIn(@Body() dto: CreateRoomSessionDto) {
-    return this.roomSessionsService.checkIn(dto);
+  checkIn(@Body() dto: CreateRoomSessionDto, @Req() req: any) {
+    console.log('Dữ liệu User từ Token:', req.user);
+    const staffId = req.user.sub;
+    return this.roomSessionsService.checkIn(dto, staffId);
   }
 
   @Get('active')
@@ -21,14 +34,20 @@ export class RoomSessionsController {
 
   @UseGuards(JwtAuthGuard)
   @Post('check-out/:id')
-  checkOut(@Param('id') sessionId: string, @Body() checkoutDto: CheckoutDto) {
+  checkOut(
+    @Param('id') sessionId: string,
+    @Body() checkoutDto: CheckoutDto,
+    @Req() req: any,
+  ) {
+    const staffId = req.user.sub;
     return this.roomSessionsService.checkOut(
       sessionId,
+      staffId,
       checkoutDto.discountCode,
     );
   }
 
-  //  Xem lịch sử hóa đơn
+  // Xem lịch sử hóa đơn
   @UseGuards(JwtAuthGuard)
   @Get('history')
   getPaidSessions() {

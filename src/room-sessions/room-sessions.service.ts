@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
   BadRequestException,
@@ -15,8 +16,8 @@ export class RoomSessionsService {
     private eventsGateway: EventsGateway,
   ) {}
 
-  // 1. MỞ PHÒNG
-  async checkIn(dto: CreateRoomSessionDto) {
+  // 1. MỞ PHÒNG (Thêm tham số staffId)
+  async checkIn(dto: CreateRoomSessionDto, staffId: string) {
     const room = await this.prisma.room.findUnique({
       where: { id: dto.roomId },
     });
@@ -35,7 +36,10 @@ export class RoomSessionsService {
       });
 
       const session = await tx.roomSession.create({
-        data: { roomId: dto.roomId },
+        data: {
+          roomId: dto.roomId,
+          checkInStaffId: staffId,
+        },
         include: { room: true },
       });
 
@@ -52,12 +56,15 @@ export class RoomSessionsService {
   async findAllOpen() {
     return this.prisma.roomSession.findMany({
       where: { endTime: null },
-      include: { room: { include: { roomType: true } } },
+      include: {
+        room: { include: { roomType: true } },
+        checkInStaff: { select: { fullName: true } },
+      },
     });
   }
 
-  // 3. ĐÓNG PHÒNG VÀ TÍNH TIỀN
-  async checkOut(sessionId: string, discountCode?: string) {
+  // 3. ĐÓNG PHÒNG VÀ TÍNH TIỀN (Thêm tham số staffId)
+  async checkOut(sessionId: string, staffId: string, discountCode?: string) {
     const session = await this.prisma.roomSession.findUnique({
       where: { id: sessionId },
       include: {
@@ -107,6 +114,8 @@ export class RoomSessionsService {
     );
 
     const totalServiceFee = session.orderItems.reduce((total, item) => {
+      // Chỉ tính tiền những món đã PENDING hoặc SERVED (đề phòng có status CANCELLED)
+      if (item.status === 'CANCELLED') return total;
       return total + item.quantity * item.priceAtTime;
     }, 0);
 
@@ -114,8 +123,11 @@ export class RoomSessionsService {
     const discountAmount = Math.round((totalAmount * discountPercent) / 100);
     const finalAmount = totalAmount - discountAmount;
 
+    let updatedSession;
+
     await this.prisma.$transaction(async (tx) => {
-      await tx.roomSession.update({
+      // kết quả update để trả về cho Frontend in hóa đơn
+      updatedSession = await tx.roomSession.update({
         where: { id: sessionId },
         data: {
           endTime: endTime,
@@ -126,6 +138,12 @@ export class RoomSessionsService {
           finalAmount,
           isPaid: true,
           discountId: appliedDiscount?.id || null,
+          checkOutStaffId: staffId,
+        },
+        include: {
+          room: { include: { roomType: true } },
+          checkInStaff: { select: { fullName: true } },
+          checkOutStaff: { select: { fullName: true } },
         },
       });
 
@@ -142,28 +160,20 @@ export class RoomSessionsService {
 
     return {
       message: 'Thanh toán và đóng phòng thành công!',
-      bill: {
-        room: session.room.name,
-        duration: `${durationMinutes} phút`,
-        totalRoomFee,
-        totalServiceFee,
-        totalAmount,
-        appliedDiscount: discountCode
-          ? `${discountCode} (-${discountPercent}%)`
-          : 'Không có',
-        discountAmount,
-        finalAmount,
-      },
+      data: updatedSession,
     };
   }
-  // Lấy lịch sử các phiên đã thanh toán
+
+  // 4. LẤY LỊCH SỬ CÁC PHIÊN ĐÃ THANH TOÁN
   async getPaidSessions() {
     return this.prisma.roomSession.findMany({
       where: { isPaid: true },
       orderBy: { endTime: 'desc' },
-      take: 10,
+      take: 20,
       include: {
         room: { include: { roomType: true } },
+        checkInStaff: { select: { fullName: true } },
+        checkOutStaff: { select: { fullName: true } },
       },
     });
   }

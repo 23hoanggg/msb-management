@@ -27,14 +27,15 @@ enum OrderStatus {
 // --- TABLES (Các thực thể) ---
 
 model User {
-  id        String        @id @default(uuid())
-  username  String        @unique
-  email     String        @unique
-  password  String
-  fullName  String
-  role      Role          @default(STAFF)
-  sessions  RoomSession[] // Phụ trách thanh toán
-  createdAt DateTime      @default(now())
+  id             String        @id @default(uuid())
+  username       String        @unique
+  email          String        @unique
+  password       String
+  fullName       String
+  role           Role          @default(STAFF)
+  createdAt      DateTime      @default(now())
+  sessionsOpened RoomSession[] @relation("CheckInStaff")
+  sessionsClosed RoomSession[] @relation("CheckOutStaff")
 }
 
 model RoomType {
@@ -82,8 +83,13 @@ model RoomSession {
 
   isPaid Boolean @default(false)
 
-  staff      User?     @relation(fields: [staffId], references: [id])
-  staffId    String?
+  // 🟢 ĐÃ SỬA: Thay thế staffId cũ bằng 2 cột này
+  checkInStaffId String?
+  checkInStaff   User?   @relation("CheckInStaff", fields: [checkInStaffId], references: [id])
+
+  checkOutStaffId String?
+  checkOutStaff   User?   @relation("CheckOutStaff", fields: [checkOutStaffId], references: [id])
+
   discount   Discount? @relation(fields: [discountId], references: [id])
   discountId String?
 
