@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DiscountsService } from './discounts.service';
 import { DiscountsController } from './discounts.controller';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
   providers: [DiscountsService, PrismaService],
