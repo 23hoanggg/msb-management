@@ -11,8 +11,12 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
+    const dbUrl =
+      process.env.DATABASE_URL ||
+      'postgresql://msb_user:msb_password@localhost:5433/msb_db?schema=public';
+
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: dbUrl,
     });
 
     super({

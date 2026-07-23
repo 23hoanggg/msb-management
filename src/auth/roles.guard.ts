@@ -26,7 +26,6 @@ export class RolesGuard implements CanActivate {
 
     const { user } = context.switchToHttp().getRequest();
 
-    // 🟢 THÊM LỚP BẢO VỆ Ở ĐÂY:
     // Nếu request không có thông tin user (do chưa đăng nhập hoặc thiếu token)
     if (!user || !user.role) {
       throw new ForbiddenException(

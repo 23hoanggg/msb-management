@@ -17,7 +17,7 @@ const DEFAULT_PASSWORD = '123456';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  // 1. LẤY DANH SÁCH TẤT CẢ NHÂN VIÊN (Bổ sung mới)
+  // 1. LẤY DANH SÁCH TẤT CẢ NHÂN VIÊN
   async findAll() {
     // Không select cột password để bảo mật dữ liệu trả về
     return this.prisma.user.findMany({
@@ -95,7 +95,7 @@ export class UsersService {
     return { message: 'Cập nhật thông tin thành công!', user: updatedUser };
   }
 
-  // 5. XÓA NHÂN VIÊN (Bổ sung mới)
+  // 5. XÓA NHÂN VIÊN
   async remove(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Không tìm thấy nhân viên này');
@@ -108,7 +108,7 @@ export class UsersService {
       message: `Đã xóa tài khoản nhân viên ${user.username} thành công!`,
     };
   }
-  // 1. SỬA LẠI: THAY "any" BẰNG DTO CỦA ADMIN
+
   async updateUserByAdmin(
     targetUserId: string,
     updateData: UpdateUserByAdminDto,
@@ -149,22 +149,22 @@ export class UsersService {
   }
 
   // 2. reset password
-  async resetPassword(userId: string, newPassword?: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
+  // async resetPassword(userId: string, newPassword?: string) {
+  //   const user = await this.prisma.user.findUnique({ where: { id: userId } });
+  //   if (!user) throw new NotFoundException('Không tìm thấy người dùng');
 
-    // mặc định là "123456"
-    const passwordToHash = newPassword || '123456';
+  //   // mặc định là "123456"
+  //   const passwordToHash = newPassword || '123456';
 
-    // Mã hóa mật khẩu trước khi lưu vào Database
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(passwordToHash, salt);
+  //   // Mã hóa mật khẩu trước khi lưu vào Database
+  //   const salt = await bcrypt.genSalt(10);
+  //   const hashedPassword = await bcrypt.hash(passwordToHash, salt);
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { password: hashedPassword },
-    });
+  //   await this.prisma.user.update({
+  //     where: { id: userId },
+  //     data: { password: hashedPassword },
+  //   });
 
-    return { message: 'Thay đổi mật khẩu thành công!' };
-  }
+  //   return { message: 'Thay đổi mật khẩu thành công!' };
+  // }
 }

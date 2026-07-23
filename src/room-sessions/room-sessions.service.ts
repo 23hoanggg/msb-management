@@ -4,10 +4,10 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import { EventsGateway } from '../events/events.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoomSessionDto } from './dto/create-room-session.dto';
 import { Discount } from '@prisma/client';
-import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class RoomSessionsService {

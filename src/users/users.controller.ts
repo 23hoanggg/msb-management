@@ -50,7 +50,7 @@ export class UsersController {
     return this.usersService.updateProfile(userId, updateUserDto);
   }
 
-  // ADMIN - SỬA THÔNG TIN NHÂN VIÊN (Bỏ any, dùng DTO)
+  // ADMIN - SỬA THÔNG TIN NHÂN VIÊN
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Patch(':id')
@@ -61,17 +61,17 @@ export class UsersController {
     return this.usersService.updateUserByAdmin(id, updateData);
   }
 
-  // ADMIN - ĐẶT LẠI MẬT KHẨU
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  @Post('reset-password/:id')
-  resetPassword(
-    @Param('id') targetUserId: string,
-    @Body() body: { newPassword?: string },
-  ) {
-    // Controller nhận 2 biến và truyền đủ 2 biến xuống Service
-    return this.usersService.resetPassword(targetUserId, body.newPassword);
-  }
+  // // ADMIN - ĐẶT LẠI MẬT KHẨU
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(Role.ADMIN)
+  // @Post('reset-password/:id')
+  // resetPassword(
+  //   @Param('id') targetUserId: string,
+  //   @Body() body: { newPassword?: string },
+  // ) {
+  //   // Controller nhận 2 biến và truyền đủ 2 biến xuống Service
+  //   return this.usersService.resetPassword(targetUserId, body.newPassword);
+  // }
 
   // 5. ADMIN - XÓA NHÂN VIÊN
   @UseGuards(JwtAuthGuard, RolesGuard)

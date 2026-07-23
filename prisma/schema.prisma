@@ -83,7 +83,6 @@ model RoomSession {
 
   isPaid Boolean @default(false)
 
-  // 🟢 ĐÃ SỬA: Thay thế staffId cũ bằng 2 cột này
   checkInStaffId String?
   checkInStaff   User?   @relation("CheckInStaff", fields: [checkInStaffId], references: [id])
 
